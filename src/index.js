@@ -1,8 +1,14 @@
+// remember to config the env packages to firstly distribute the env variable to all over the application
+import dotenv from "dotenv"
+dotenv.config({
+    path:"./.env"
+})
 import mongoose from "mongoose";
-import { DATABASE_NAME } from "./constant";
+import { DATABASE_NAME } from "./constant.js";
+import dbConnection from "./db/index.js";
 
 
-
+dbConnection()
 
 
 
