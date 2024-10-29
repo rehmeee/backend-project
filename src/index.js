@@ -6,9 +6,24 @@ dotenv.config({
 import mongoose from "mongoose";
 import { DATABASE_NAME } from "./constant.js";
 import dbConnection from "./db/index.js";
+import { app } from "./app.js";
 
 
 dbConnection()
+.then(
+  ()=> {
+    app.get("/", (req,res )=>{
+      res.send("hi you are on right port")
+    })
+    app.listen(process.env.PORT, ()=>{
+      console.log("app is listening at port ", process.env.PORT)
+    });
+    app.on("error",(error)=>{
+      console.log("the errror is ", error);
+    })
+  }
+)
+.catch(error=>console.log("error while connecting to database", error))
 
 
 
