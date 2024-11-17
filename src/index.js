@@ -8,11 +8,11 @@ import { DATABASE_NAME } from "./constant.js";
 import dbConnection from "./db/index.js";
 import { app } from "./app.js";
 
-
+console.log(dbConnection());
 dbConnection()
 .then(
   ()=> {
-    app.get("/", (req,res )=>{
+    app.get('/ali', (req,res )=>{
       res.send("hi you are on right port")
     })
     app.listen(process.env.PORT, ()=>{
