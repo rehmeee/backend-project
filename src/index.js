@@ -12,7 +12,7 @@ console.log(dbConnection());
 dbConnection()
 .then(
   ()=> {
-    app.get('/ali', (req,res )=>{
+    app.get("/", (req,res )=>{
       res.send("hi you are on right port")
     })
     app.listen(process.env.PORT, ()=>{
