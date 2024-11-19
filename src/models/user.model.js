@@ -32,6 +32,9 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    refreshToken : {
+      type : String
+    }
   },
   { timestamps: true },
 );
@@ -39,7 +42,7 @@ const userSchema = new mongoose.Schema(
 userSchema.pre("save", async function (next) {
   //because it always encrypt the password when the something is changed so we need to check when to encrypt the password
   if (!this.isModified("password")) return next();
-  this.password = bcrypt.hash(this.password, 10);
+  this.password = await bcrypt.hash(this.password, 10);
   next();
 });
 // mongoose give us the power to create custom methods
