@@ -32,9 +32,9 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
-    refreshToken : {
-      type : String
-    }
+    refreshToken: {
+      type: String,
+    },
   },
   { timestamps: true },
 );
@@ -47,7 +47,7 @@ userSchema.pre("save", async function (next) {
 });
 // mongoose give us the power to create custom methods
 userSchema.methods.isPasswordCorrect = async function (password) {
-  await bcrypt.compare(password, this.password);
+  return await bcrypt.compare(password, this.password);
 };
 
 userSchema.methods.genrateAccessToken = function () {
