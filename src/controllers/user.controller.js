@@ -196,12 +196,15 @@ const genrateTokens = asyncHandler(async (req, res) => {
   if (!incommingToken) {
     throw new ApiErrors(400, "no token recieved");
   }
-  const decodedToken = jwt.verify(incommingToken, process.env.REFRESH_TOKEN_SECRET)
+  const decodedToken = jwt.verify(
+    incommingToken,
+    process.env.REFRESH_TOKEN_SECRET,
+  );
   console.log(decodedToken);
   if (!decodedToken) {
     throw new ApiErrors(400, "invalid token");
   }
-  const user =await User.findById(decodedToken?._id);
+  const user = await User.findById(decodedToken?._id);
 
   if (!user) {
     throw new ApiErrors(400, "USER not found according to that refreshToken");
@@ -232,4 +235,112 @@ const genrateTokens = asyncHandler(async (req, res) => {
       ),
     );
 });
-export { registerUser, loginUser, logoutUser, genrateTokens };
+
+// update the password of the user
+const updateCurrentPassword = asyncHandler(async (req, res) => {
+  // to change the password we must have the current password and new password
+  // because we know if the user is logind then he can chage the password so when he send request we can collect the access token by using auth middleware and then we can add the user to the request
+  const { password, newPassword } = req.body;
+  const user = await User.findById(req.user._id);
+
+  const validPassword = user.isPasswordCorrect(password);
+  if (!validPassword) {
+    throw new ApiErrors(400, "your password is incorrect");
+  }
+  user.password = password;
+  await user.save({validatBeforeSave:false})
+  return res
+  .status(200)
+  .json(new ApiResponse(200, {}, "your password edited successfully"))
+});
+
+// get current user information
+const getCurrentUser = asyncHandler(async (req, res) => {
+      return res
+      .status(200)
+      .json(new ApiResponse(200, req.user, "current user "))
+})
+
+// update the account details 
+const updateAccountDetails = asyncHandler(async (req, res) => {
+    const {fullName, email} = req.body;
+    if(!fullName || !email){
+      throw new ApiErrors(400, "email and fullName is requiered")
+    }
+
+    const user = await User.findByIdAndUpdate(
+      req.user?._id,
+      {
+        $set:{
+          fullName,
+          email: email
+        }
+      },
+      {new : true }
+    ).select("-password")
+
+    if (!user) {
+      throw new ApiErrors(500, "something went wrong")
+    }
+    return res
+    .status(200)
+    .json(new ApiResponse(200, user, "Account details updated successfully"))
+
+
+})
+
+// update the avtar of the user 
+const updateAvtar = asyncHandler ( async (req, res) => {
+  // because this request comes from the two requests so it have the user informatin along with image file so we can access both 
+  // so i know in database we use only the link so first we have to upload this file to cloudinary and then send the link to the file 
+  const localfilePath = req.file.path;
+  if (!localfilePath) {
+    throw new ApiErrors(400, "local file path not found ")
+
+  }
+  const cloudinaryResponse = await uploadToCloudinary(localfilePath)
+  if (!cloudinaryResponse) {
+    throw new ApiErrors(400, "somethig went wrong while uploading the file to cloudinary")
+  }
+  const user = await User.findById(req.user?._id).select("-password")
+  if (!user) {
+    throw new ApiErrors(400, "user not found ")
+  }
+  user.avtar = cloudinaryResponse.url;
+  await user.save({validatBeforeSave:false})
+
+  return res
+  .status(200)
+  .json(new ApiResponse(200, user, "avtar changed successfully"))
+})
+
+// to update the user cover image
+const updateUserCoverImage = asyncHandler ( async (req, res) => {
+  // because this request comes from the two requests so it have the user informatin along with image file so we can access both 
+  // so i know in database we use only the link so first we have to upload this file to cloudinary and then send the link to the file 
+  const localfilePath = req.file?.path;
+  if (!localfilePath) {
+    throw new ApiErrors(400, "local file path not found ")
+
+  }
+  const cloudinaryResponse = await uploadToCloudinary(localfilePath)
+  if (!cloudinaryResponse.url) {
+    throw new ApiErrors(400, "somethig went wrong while uploading the file to cloudinary")
+  }
+  const user = await User.findByIdAndUpdate(req.user?._id,
+    {$set: {
+      coverImage: cloudinaryResponse.url
+    }},
+    {
+      new: true
+    }
+  ).select("-password")
+  if (!user) {
+    throw new ApiErrors(400, "user not found ")
+  }
+
+  return res
+  .status(200)
+  .json(new ApiResponse(200, user, "avtar changed successfully"))
+})
+export { registerUser, loginUser, logoutUser, genrateTokens,updateCurrentPassword, getCurrentUser,updateAccountDetails,updateAvtar,updateUserCoverImage };
