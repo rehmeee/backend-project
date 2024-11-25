@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { genrateTokens, loginUser, logoutUser, registerUser, updateAvtar } from "../controllers/user.controller.js";
+import { genrateTokens, loginUser, logoutUser, registerUser,getCurrentUser, updateAvtar } from "../controllers/user.controller.js";
 import {upload} from "../middlewares/multer.middleware.js"
 import { verifyUser } from "../middlewares/auth.middleware.js";
 const router = Router()
@@ -19,10 +19,16 @@ router.route("/login").post(loginUser) // upload.none() , now we send the form d
 router.route("/logout").post(verifyUser,logoutUser);
 
 // to genrate the access token 
-router.route("/tokens").post(genrateTokens)
+router.route("/tokens").post(verifyUser,genrateTokens)
 
+
+// to get the current users 
+router.route("/getCurrentUser").post(verifyUser,getCurrentUser)
 // to update the user avtar 
 // here is somethig that is more important tha here we know user send a file and also we chck the user so we have to use the two middlewares first we use multer and then we use the authuntication
 
-router.route("/updateAvtar").post(upload.single("avtar"),verifyUser, updateAvtar)
+// because here wo have to update the single file from the user so we use the patch method 
+// we can use post 
+// put method is used to change overall data of the user 
+router.route("/updateAvtar").patch(verifyUser,upload.single("avtar"), updateAvtar)
 export default router

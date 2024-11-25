@@ -1,4 +1,4 @@
-import mongoose from "mongoose";
+import mongoose, { Schema } from "mongoose";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 const userSchema = new mongoose.Schema(
@@ -9,6 +9,10 @@ const userSchema = new mongoose.Schema(
       lowercase: true,
       unique: true,
       index: true, // this will help to while searching in database
+    },
+    watchHistory:{
+      type:Schema.Types.ObjectId,
+      ref:"Video"
     },
     email: {
       type: String,
