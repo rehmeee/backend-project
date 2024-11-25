@@ -18,9 +18,8 @@ const videoSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
-    deuration:{
-        type: Number,
-        
+    deuration: {
+      type: Number,
     },
     owner: {
       type: mongoose.Schema.Types.ObjectId,
@@ -37,5 +36,5 @@ const videoSchema = new mongoose.Schema(
   },
   { timestamps: true },
 );
-videoSchema.plugin(mongooseAggregatePaginate)
+videoSchema.plugin(mongooseAggregatePaginate);
 export const Video = mongoose.model("Video", videoSchema);

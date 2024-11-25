@@ -10,9 +10,9 @@ const userSchema = new mongoose.Schema(
       unique: true,
       index: true, // this will help to while searching in database
     },
-    watchHistory:{
-      type:Schema.Types.ObjectId,
-      ref:"Video"
+    watchHistory: {
+      type: Schema.Types.ObjectId,
+      ref: "Video",
     },
     email: {
       type: String,

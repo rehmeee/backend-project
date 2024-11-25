@@ -249,231 +249,245 @@ const updateCurrentPassword = asyncHandler(async (req, res) => {
     throw new ApiErrors(400, "your password is incorrect");
   }
   user.password = password;
-  await user.save({validatBeforeSave:false})
+  await user.save({ validatBeforeSave: false });
   return res
-  .status(200)
-  .json(new ApiResponse(200, {}, "your password edited successfully"))
+    .status(200)
+    .json(new ApiResponse(200, {}, "your password edited successfully"));
 });
 
 // get current user information
 const getCurrentUser = asyncHandler(async (req, res) => {
   console.log(req.user?._id);
   console.log(req.user?.username);
-      return res
-      .status(200)
-      .json(new ApiResponse(200, req.user, "current user "))
-})
+  return res.status(200).json(new ApiResponse(200, req.user, "current user "));
+});
 
-// update the account details 
+// update the account details
 const updateAccountDetails = asyncHandler(async (req, res) => {
-    const {fullName, email} = req.body;
-    if(!fullName || !email){
-      throw new ApiErrors(400, "email and fullName is requiered")
-    }
+  const { fullName, email } = req.body;
+  if (!fullName || !email) {
+    throw new ApiErrors(400, "email and fullName is requiered");
+  }
 
-    const user = await User.findByIdAndUpdate(
-      req.user?._id,
-      {
-        $set:{
-          fullName,
-          email: email
-        }
+  const user = await User.findByIdAndUpdate(
+    req.user?._id,
+    {
+      $set: {
+        fullName,
+        email: email,
       },
-      {new : true }
-    ).select("-password")
+    },
+    { new: true },
+  ).select("-password");
 
-    if (!user) {
-      throw new ApiErrors(500, "something went wrong")
-    }
-    return res
+  if (!user) {
+    throw new ApiErrors(500, "something went wrong");
+  }
+  return res
     .status(200)
-    .json(new ApiResponse(200, user, "Account details updated successfully"))
+    .json(new ApiResponse(200, user, "Account details updated successfully"));
+});
 
-
-})
-
-// update the avtar of the user 
-const updateAvtar = asyncHandler ( async (req, res) => {
-  // because this request comes from the two requests so it have the user informatin along with image file so we can access both 
-  // so i know in database we use only the link so first we have to upload this file to cloudinary and then send the link to the file 
+// update the avtar of the user
+const updateAvtar = asyncHandler(async (req, res) => {
+  // because this request comes from the two requests so it have the user informatin along with image file so we can access both
+  // so i know in database we use only the link so first we have to upload this file to cloudinary and then send the link to the file
   const localfilePath = req.file.path;
   if (!localfilePath) {
-    throw new ApiErrors(400, "local file path not found ")
-
+    throw new ApiErrors(400, "local file path not found ");
   }
-  const cloudinaryResponse = await uploadToCloudinary(localfilePath)
+  const cloudinaryResponse = await uploadToCloudinary(localfilePath);
   if (!cloudinaryResponse) {
-    throw new ApiErrors(400, "somethig went wrong while uploading the file to cloudinary")
+    throw new ApiErrors(
+      400,
+      "somethig went wrong while uploading the file to cloudinary",
+    );
   }
-  const user = await User.findById(req.user?._id).select("-password")
+  const user = await User.findById(req.user?._id).select("-password");
   if (!user) {
-    throw new ApiErrors(400, "user not found ")
+    throw new ApiErrors(400, "user not found ");
   }
   user.avtar = cloudinaryResponse.url;
-  await user.save({validatBeforeSave:false})
+  await user.save({ validatBeforeSave: false });
 
   return res
-  .status(200)
-  .json(new ApiResponse(200, user, "avtar changed successfully"))
-})
+    .status(200)
+    .json(new ApiResponse(200, user, "avtar changed successfully"));
+});
 
 // to update the user cover image
-const updateUserCoverImage = asyncHandler ( async (req, res) => {
-  // because this request comes from the two requests so it have the user informatin along with image file so we can access both 
-  // so i know in database we use only the link so first we have to upload this file to cloudinary and then send the link to the file 
+const updateUserCoverImage = asyncHandler(async (req, res) => {
+  // because this request comes from the two requests so it have the user informatin along with image file so we can access both
+  // so i know in database we use only the link so first we have to upload this file to cloudinary and then send the link to the file
   const localfilePath = req.file?.path;
   if (!localfilePath) {
-    throw new ApiErrors(400, "local file path not found ")
-
+    throw new ApiErrors(400, "local file path not found ");
   }
-  const cloudinaryResponse = await uploadToCloudinary(localfilePath)
+  const cloudinaryResponse = await uploadToCloudinary(localfilePath);
   if (!cloudinaryResponse.url) {
-    throw new ApiErrors(400, "somethig went wrong while uploading the file to cloudinary")
+    throw new ApiErrors(
+      400,
+      "somethig went wrong while uploading the file to cloudinary",
+    );
   }
-  const user = await User.findByIdAndUpdate(req.user?._id,
-    {$set: {
-      coverImage: cloudinaryResponse.url
-    }},
+  const user = await User.findByIdAndUpdate(
+    req.user?._id,
     {
-      new: true
-    }
-  ).select("-password")
+      $set: {
+        coverImage: cloudinaryResponse.url,
+      },
+    },
+    {
+      new: true,
+    },
+  ).select("-password");
   if (!user) {
-    throw new ApiErrors(400, "user not found ")
+    throw new ApiErrors(400, "user not found ");
   }
 
   return res
-  .status(200)
-  .json(new ApiResponse(200, user, "avtar changed successfully"))
-})
+    .status(200)
+    .json(new ApiResponse(200, user, "avtar changed successfully"));
+});
 
-// get the user subscribers and and the the channel the user subscribed 
-const getUserSubscribers  = asyncHandler(async (req,res) => {
-    const {username} = req.params
-    if (!username?.trim()) {
-      throw new ApiErrors(400, "username not fount ")
+// get the user subscribers and and the the channel the user subscribed
+const getUserSubscribers = asyncHandler(async (req, res) => {
+  const { username } = req.params;
+  if (!username?.trim()) {
+    throw new ApiErrors(400, "username not fount ");
+  }
+  const channel = await User.aggregate([
+    {
+      $match: {
+        username: username?.toLowerCase(),
+      },
+    },
+    {
+      $lookup: {
+        from: "subscriptions",
+        localField: "_id",
+        foreignField: "channel",
+        as: "subscribers",
+      },
+    },
+    {
+      $lookup: {
+        from: "subscriptions",
+        localField: "_id",
+        foreignField: "subscriber",
+        as: "subscribedTo",
+      },
+    },
+    {
+      $addFields: {
+        subscribersCount: {
+          $size: "$subscribers",
+        },
+        subscribedToCount: {
+          $size: "$subscribedTo",
+        },
+        isSubscribed: {
+          $cond: {
+            if: {
+              $in: [req.user?._id, "$subscribers.subscriber"],
+            },
+            then: true,
+            else: false,
+          },
+        },
+      },
+    },
+    {
+      $project: {
+        fullName: 1,
+        username: 1,
+        subscribersCount: 1,
+        subscribedToCount: 1,
+        email: 1,
+        avtar: 1,
+        coverImage: 1,
+        isSubscribed: 1,
+      },
+    },
+  ]);
+  return res
+    .status(200)
+    .json(new ApiResponse(200, channel, "this is users channel"));
+});
 
-    }
-    const channel = await User.aggregate([
-              {
-                $match:{
-                  username : username?.toLowerCase()
-                }
-              },
-              {
-                $lookup:{
-                  from : "subscriptions",
-                  localField: "_id",
-                  foreignField: "channel",
-                  as : "subscribers"
-                }
-              },
-              {
-                $lookup:{
-                  from : "subscriptions",
-                  localField: "_id",
-                  foreignField: "subscriber",
-                  as : "subscribedTo"
-    
-                }
-              },
-              {
-                $addFields:{
-                  subscribersCount:{
-                    $size:"$subscribers"
-                },
-                subscribedToCount:{
-                  $size:"$subscribedTo"
-                },
-                isSubscribed:{
-                  $cond:{
-                    if:{
-                      $in:[req.user?._id, "$subscribers.subscriber"]
-                    },
-                    then:true,
-                    else : false
-                  }
-                }
-              }},
-              {
-                $project:{
-                  fullName:1,
-                  username: 1,
-                  subscribersCount:1,
-                  subscribedToCount:1,
-                  email:1,
-                  avtar:1,
-                  coverImage:1,
-                  isSubscribed:1
-                }
-              }
-    
-        ])
-        return res
-        .status(200)
-        .json(
-          new ApiResponse(200, channel, "this is users channel")
-        )
-   
-})
-
-// get user watch History 
-const userWatchHistory = asyncHandler(async (req,res) => {
-  // fist join to the videos model and get the videos according to that particular id 
+// get user watch History
+const userWatchHistory = asyncHandler(async (req, res) => {
+  // fist join to the videos model and get the videos according to that particular id
   // then as we know in video model we also have a user field so further more we have to add a sub pipeline to get the user info
 
   const user = await User.aggregate([
     {
-      $match:{
-        // because 
-        _id : new mongoose.Types.ObjectId(req.user?._id)
-      }
+      $match: {
+        // because
+        _id: new mongoose.Types.ObjectId(req.user?._id),
+      },
     },
     {
-      $lookup:{
-        from:"videos",
-        localField:"watchHistory",
-        foreignField:"_id",
-        as:"videos",
-        pipeline:[
+      $lookup: {
+        from: "videos",
+        localField: "watchHistory",
+        foreignField: "_id",
+        as: "videos",
+        pipeline: [
           {
-            $lookup:{
-              from:"users",
-              localField:"owner",
-              foreignField:"_id",
-              as:"ownerInfo",
-              pipeline:[
-               { $project:{
-                  fullName:1,
-                  username:1,
-                  avtar:1,
-                  coverImage:1
-                }}
-              ]
-            }
+            $lookup: {
+              from: "users",
+              localField: "owner",
+              foreignField: "_id",
+              as: "ownerInfo",
+              pipeline: [
+                {
+                  $project: {
+                    fullName: 1,
+                    username: 1,
+                    avtar: 1,
+                    coverImage: 1,
+                  },
+                },
+              ],
+            },
           },
           {
-            $addFields:{
-              owner:{
-                $first:"$ownerInfo"
-              }
-            }
+            $addFields: {
+              owner: {
+                $first: "$ownerInfo",
+              },
+            },
           },
-          
-        ]
-      }
-    }
-  ])
+        ],
+      },
+    },
+  ]);
 
   if (!user) {
-    throw new ApiErrors(400, "user not found ")
+    throw new ApiErrors(400, "user not found ");
   }
   return res
-  .status(200)
-  .json(
-    new ApiResponse(200, user[0].watchHistory,"successfully fetched the user watched History ")
-  )
-})
+    .status(200)
+    .json(
+      new ApiResponse(
+        200,
+        user[0].watchHistory,
+        "successfully fetched the user watched History ",
+      ),
+    );
+});
 
-
-export { registerUser, loginUser, logoutUser, genrateTokens,updateCurrentPassword, getCurrentUser,updateAccountDetails,updateAvtar,updateUserCoverImage,getUserSubscribers ,userWatchHistory};
+export {
+  registerUser,
+  loginUser,
+  logoutUser,
+  genrateTokens,
+  updateCurrentPassword,
+  getCurrentUser,
+  updateAccountDetails,
+  updateAvtar,
+  updateUserCoverImage,
+  getUserSubscribers,
+  userWatchHistory,
+};
